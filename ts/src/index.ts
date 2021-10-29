@@ -1,7 +1,7 @@
 import { UniSwapV2 } from './uniswapV2';
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
 import IERC20 from '@uniswap/v2-core/build/IERC20.json';
-import { ChainId, Route, TokenAmount, Token, Trade, Router, Percent } from "@uniswap/sdk";
+import { ChainId, Token} from "@uniswap/sdk";
 import { Command } from './command';
 import { Utils } from './utils';
 import Web3 from 'web3';
@@ -9,7 +9,6 @@ import type { Contract } from 'web3-eth-contract';
 import fs from "fs";
 import path from "path";
 import type { AbiItem } from 'web3-utils';
-import { promisify } from 'util';
 
 const fileContent = fs.readFileSync(path.join(__dirname, "../account.json")).toString();
 const accountInfo = JSON.parse(fileContent);
@@ -90,19 +89,8 @@ async function web3_swap(web3: Web3, uni_weth_lz_contract: Contract, tokenA: Tok
 }
 
 async function print_transction(web3: Web3, contract: Contract, tx: string) {
-    const getTransactionPromisify = promisify(web3.eth.getTransaction);
-    console.log(await getTransactionPromisify(tx));
-}
-
-async function test_router(uniswapV2: UniSwapV2, tokenA: Token, tokenB: Token) {
-    const pair_weth_lz = await uniswapV2.fetchPair(tokenA, tokenB);
-    const amount = generate_token_amount(tokenA, '0.01')
-    Router.swapCallParameters(
-        Trade.exactIn(
-            new Route([pair_weth_lz], tokenA, tokenB),
-            amount
-        ),
-        { ttl: 50, recipient: account_address, allowedSlippage: new Percent('1', '100') });
+    console.log('\n\n transaction \n\n', await web3.eth.getTransaction(tx));
+    console.log('\n\n transaction Receipt \n\n', await web3.eth.getTransactionReceipt(tx));
 }
 
 
@@ -132,11 +120,6 @@ async function run() {
 
     initCommand(uniswapV2, WETH, LZ);
 
-}
-
-
-function generate_token_amount(token: Token, amount: string) {
-    return new TokenAmount(token, Utils.absAmountToRawAmount(amount, token))
 }
 
 function generate_args(arrs: string[], weth: Token, lz: Token) {
@@ -205,7 +188,7 @@ function initCommand(uniswapV2: UniSwapV2, WETH: Token, LZ: Token) {
     })
 
     command.putCommand('6', async (arr: string[]) => {
-        const tx = arr[1].trim();
+        const tx = arr[0].trim();
         if (tx && tx.length > 0) {
             await print_transction(web3, contract_abi, tx);
         }
@@ -241,6 +224,5 @@ async function handleCommand(chunk: string, command: Command) {
         console.log(command_header);
     }
 }
-
 
 run();
