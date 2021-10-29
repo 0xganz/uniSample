@@ -1,19 +1,21 @@
-### ts-uni-sample
+## ts-uni-sample
+
     使用命令行交互
 
-### ready
+## ready
  
- . node v12+
- . cp account.json.example account.json 填写自己的账户信息
+ - node v12+
+ - cp account.json.example account.json 填写自己的账户信息
 
-### start
+## start
+
 ```
-    cd ts
-    npm i
-    npm start
+cd ts
+npm i
+npm start
 ```
 
-### sample 
+## sample 
 
 查看 池子信息
 ```
@@ -47,5 +49,5 @@
 查看 tranaction 详情 (开发中...)
 
 ```
-5 transactionHASH 
+6 transactionHASH 
 ```
