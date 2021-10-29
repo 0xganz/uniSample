@@ -1,0 +1,24 @@
+{
+  "name": "ts-uni-sample",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "start": "npx ts-node ./src/index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^10.17.60",
+    "@typescript-eslint/eslint-plugin": "^5.2.0",
+    "@typescript-eslint/parser": "^5.2.0",
+    "eslint": "^8.1.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "@uniswap/sdk": "^3.0.2",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "web3": "^1.6.0"
+  }
+}
