@@ -5,9 +5,11 @@ import { ChainId, Route, TokenAmount, Token, Trade, Router, Percent } from "@uni
 import { Command } from './command';
 import { Utils } from './utils';
 import Web3 from 'web3';
+import type { Contract } from 'web3-eth-contract';
 import fs from "fs";
 import path from "path";
 import type { AbiItem } from 'web3-utils';
+import { promisify } from 'util';
 
 const fileContent = fs.readFileSync(path.join(__dirname, "../account.json")).toString();
 const accountInfo = JSON.parse(fileContent);
@@ -44,7 +46,7 @@ async function approve_account(token: Token) {
     console.log(result);
 }
 
-async function web3_swap(tokenA: Token, tokenB: Token, amount: string) {
+function initWeb3() {
     const web3 = new Web3(goerli_rpc_server);
     const defaultAccount = web3.eth.defaultAccount;
     if (!defaultAccount) {
@@ -56,6 +58,10 @@ async function web3_swap(tokenA: Token, tokenB: Token, amount: string) {
     uni_weth_lz_contract.options.from = account_address; // default from address
     uni_weth_lz_contract.options.gasPrice = '2000000000'; // default gas price in wei
     uni_weth_lz_contract.options.gas = 23964;
+    return { web3, contract_abi: uni_weth_lz_contract };
+}
+
+async function web3_swap(web3: Web3, uni_weth_lz_contract: Contract, tokenA: Token, tokenB: Token, amount: string) {
     // contract defined
     // function swapExactTokensForTokens(
     //     uint amountIn,
@@ -65,7 +71,7 @@ async function web3_swap(tokenA: Token, tokenB: Token, amount: string) {
     //     uint deadline
     // ) 
     // web3.eth.subscribe('logs', {address:account_address}, (err,log)=>console.log(err, log))
-    console.log('contract.defaultAccount : ', uni_weth_lz_contract.defaultAccount);
+
     const amountIn = Utils.absAmountToRawAmount(amount, tokenA);
     const amountOutMin = Utils.absAmountToRawAmount('0', tokenB);
     const paths = [tokenA.address, tokenB.address]
@@ -83,6 +89,11 @@ async function web3_swap(tokenA: Token, tokenB: Token, amount: string) {
     console.log(result);
 }
 
+async function print_transction(web3: Web3, contract: Contract, tx: string) {
+    const getTransactionPromisify = promisify(web3.eth.getTransaction);
+    console.log(await getTransactionPromisify(tx));
+}
+
 async function test_router(uniswapV2: UniSwapV2, tokenA: Token, tokenB: Token) {
     const pair_weth_lz = await uniswapV2.fetchPair(tokenA, tokenB);
     const amount = generate_token_amount(tokenA, '0.01')
@@ -98,6 +109,7 @@ async function test_router(uniswapV2: UniSwapV2, tokenA: Token, tokenB: Token) {
 async function run() {
 
     const uniswapV2 = new UniSwapV2(ChainId.GÖRLI);
+
     // uniswapV2.printInfo();
     console.log("chainId", ChainId.GÖRLI);
     console.log("account address:", account_address);
@@ -152,8 +164,8 @@ const command_header = "\n ====================== \n"
     + "2: MEASURE TRADE WHEN INPUT AMOUNT; args:[inputToken, inputAmount] \n"
     + "3: MEASURE TRADE WHEN OUTPUT AMOUNT; args:[outputToken, outputAmount]  \n"
     + "4: SWAP; args:[inputToken, inputAmount] \n"
-    + "5: APPROVE; args: [token]"
-    + "6: TRANSTION DETAILS: args: [transactionHash]"
+    + "5: APPROVE; args: [token]\n"
+    + "6: TRANSTION DETAILS: args: [transactionHash]\n"
     + "h: COMMAND help \n"
     + "q: EXIT \n"
     + "===================== \n";
@@ -180,15 +192,23 @@ function initCommand(uniswapV2: UniSwapV2, WETH: Token, LZ: Token) {
         await uniswapV2.measureTradeAmounByOutput(key, arr[1], tokenA, tokenB);
     })
 
+    const { web3, contract_abi } = initWeb3()
     command.putCommand('4', async (arr: string[]) => {
         const { tokenA, tokenB } = generate_args(arr, WETH, LZ);
         const amount = arr[1]
-        await web3_swap(tokenA, tokenB, amount);
+        await web3_swap(web3, contract_abi, tokenA, tokenB, amount);
     })
 
     command.putCommand('5', async (arr: string[]) => {
         const { tokenA } = generate_args(arr, WETH, LZ);
         await approve_account(tokenA);
+    })
+
+    command.putCommand('6', async (arr: string[]) => {
+        const tx = arr[1].trim();
+        if (tx && tx.length > 0) {
+            await print_transction(web3, contract_abi, tx);
+        }
     })
 
     command.putCommand('h', () => {

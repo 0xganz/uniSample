@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-types
 type NewType = Function;
 
 export class Command {
