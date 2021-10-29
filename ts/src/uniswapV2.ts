@@ -57,10 +57,6 @@ export class UniSwapV2 {
         console.log("input amount: ", inputAmount.toSignificant(6));
     }
 
-    public printInfo() {
-        console.log("select chainId:", ChainId[this.chainId]);
-    }
-
     public static printChainId() {
         console.log(ChainId)
     }

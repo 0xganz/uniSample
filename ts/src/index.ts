@@ -73,13 +73,13 @@ async function web3_swap(web3: Web3, uni_weth_lz_contract: Contract, tokenA: Tok
 
     const amountIn = Utils.absAmountToRawAmount(amount, tokenA);
     const amountOutMin = Utils.absAmountToRawAmount('0', tokenB);
-    const paths = [tokenA.address, tokenB.address]
+    const path = [tokenA.address, tokenB.address]
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
     const result = await uni_weth_lz_contract.methods.swapExactTokensForTokens(
         amountIn,
         amountOutMin,
-        paths,
+        path,
         account_address,
         deadline).send({
             gasLimit: 273305,
@@ -97,15 +97,13 @@ async function print_transction(web3: Web3, contract: Contract, tx: string) {
 async function run() {
 
     const uniswapV2 = new UniSwapV2(ChainId.GÖRLI);
-
-    // uniswapV2.printInfo();
-    console.log("chainId", ChainId.GÖRLI);
+    
+    console.log("chainId", ChainId[ChainId.GÖRLI]);
     console.log("account address:", account_address);
 
     const WETH = await uniswapV2.fetchTokenData(wethTokenAddress);
     const LZ = await uniswapV2.fetchTokenData(lzTokenAddress);
     const pair_weth_lz = await uniswapV2.fetchPair(WETH, LZ);
-    // await test_router(uniswapV2,WETH,LZ);
 
     console.log("WETH token address:", WETH.address);
     console.log("LZ token address:", LZ.address);
@@ -116,10 +114,7 @@ async function run() {
     console.log("pool size: ( WETH: ", pair_weth_lz.reserveOf(WETH).toSignificant(6), ', LZ', pair_weth_lz.reserveOf(LZ).toSignificant(6), ")");
     console.log("1 WETH =", pair_weth_lz.priceOf(WETH).toSignificant(6), "LZ");
 
-    // const route = new Route([pair], WETH);
-
     initCommand(uniswapV2, WETH, LZ);
-
 }
 
 function generate_args(arrs: string[], weth: Token, lz: Token) {
