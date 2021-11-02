@@ -97,8 +97,8 @@ async function balance_info(web3: Web3, WETH: Token, LZ: Token) {
     const lz = await erc20_b_contract.methods.balanceOf(account_address).call();
     const eth = await web3.eth.getBalance(account_address);
 
-    console.log('ETH  : ', web3.utils.fromWei(eth));
-    console.log('WETH : ', Utils.rawAmountToabsAmount(weth, WETH));
+    console.log('ETH  :', web3.utils.fromWei(eth));
+    console.log('WETH :', Utils.rawAmountToabsAmount(weth, WETH));
     console.log('LZ   :', Utils.rawAmountToabsAmount(lz, LZ));
 }
 
