@@ -57,10 +57,6 @@ export class UniSwapV2 {
         console.log("input amount: ", inputAmount.toSignificant(6));
     }
 
-    public static printChainId() {
-        console.log(ChainId)
-    }
-
     generate_token_amount(token: Token, amount: string) {
         return new TokenAmount(token, Utils.absAmountToRawAmount(amount, token))
     }

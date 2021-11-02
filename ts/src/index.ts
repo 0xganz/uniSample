@@ -1,7 +1,7 @@
 import { UniSwapV2 } from './uniswapV2';
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
 import IERC20 from '@uniswap/v2-core/build/IERC20.json';
-import { ChainId, Token} from "@uniswap/sdk";
+import { ChainId, Token } from "@uniswap/sdk";
 import { Command } from './command';
 import { Utils } from './utils';
 import Web3 from 'web3';
@@ -24,7 +24,6 @@ const lzTokenAddress = '0x72035Cdc5B39ae2686Db775FE0037A8B4f22C45f';
 const goerli_rpc_server = 'https://goerli.infura.io/v3/65217be2d032403eab92e7f051dd272e';
 
 
-
 async function approve_account(token: Token) {
     const web3 = new Web3(goerli_rpc_server);
     const defaultAccount = web3.eth.defaultAccount;
@@ -34,12 +33,12 @@ async function approve_account(token: Token) {
         web3.eth.accounts.wallet.add(acc);
     }
 
-    const erc20_lz_contract = new web3.eth.Contract(IERC20.abi as AbiItem[], token.address);
-    erc20_lz_contract.options.from = account_address; // default from address
-    erc20_lz_contract.options.gasPrice = '2000000000'; // default gas price in wei
-    erc20_lz_contract.options.gas = 15678;
+    const erc20_contract = new web3.eth.Contract(IERC20.abi as AbiItem[], token.address);
+    erc20_contract.options.from = account_address; // default from address
+    erc20_contract.options.gasPrice = '2000000000'; // default gas price in wei
+    erc20_contract.options.gas = 15678;
 
-    const result = await erc20_lz_contract.methods.approve(univ2SwapRouterAddress, '999999999999999999999999999999').send({
+    const result = await erc20_contract.methods.approve(univ2SwapRouterAddress, '999999999999999999999999999999').send({
         gasLimit: 303305,
     });
     console.log(result);
@@ -88,6 +87,21 @@ async function web3_swap(web3: Web3, uni_weth_lz_contract: Contract, tokenA: Tok
     console.log(result);
 }
 
+
+
+async function balance_info(web3: Web3, WETH: Token, LZ: Token) {
+    const erc20_a_contract = new web3.eth.Contract(IERC20.abi as AbiItem[], WETH.address);
+    const erc20_b_contract = new web3.eth.Contract(IERC20.abi as AbiItem[], LZ.address);
+
+    const weth = await erc20_a_contract.methods.balanceOf(account_address).call();
+    const lz = await erc20_b_contract.methods.balanceOf(account_address).call();
+    const eth = await web3.eth.getBalance(account_address);
+
+    console.log('ETH  : ', web3.utils.fromWei(eth));
+    console.log('WETH : ', Utils.rawAmountToabsAmount(weth, WETH));
+    console.log('LZ   :', Utils.rawAmountToabsAmount(lz, LZ));
+}
+
 async function print_transction(web3: Web3, contract: Contract, tx: string) {
     console.log('\n\n transaction \n\n', await web3.eth.getTransaction(tx));
     console.log('\n\n transaction Receipt \n\n', await web3.eth.getTransactionReceipt(tx));
@@ -97,7 +111,7 @@ async function print_transction(web3: Web3, contract: Contract, tx: string) {
 async function run() {
 
     const uniswapV2 = new UniSwapV2(ChainId.GÖRLI);
-    
+
     console.log("chainId", ChainId[ChainId.GÖRLI]);
     console.log("account address:", account_address);
 
@@ -113,6 +127,7 @@ async function run() {
 
     console.log("pool size: ( WETH: ", pair_weth_lz.reserveOf(WETH).toSignificant(6), ', LZ', pair_weth_lz.reserveOf(LZ).toSignificant(6), ")");
     console.log("1 WETH =", pair_weth_lz.priceOf(WETH).toSignificant(6), "LZ");
+    console.log("1 LZ =", pair_weth_lz.priceOf(LZ).toSignificant(6), "WETH");
 
     initCommand(uniswapV2, WETH, LZ);
 }
@@ -144,6 +159,7 @@ const command_header = "\n ====================== \n"
     + "4: SWAP; args:[inputToken, inputAmount] \n"
     + "5: APPROVE; args: [token]\n"
     + "6: TRANSTION DETAILS: args: [transactionHash]\n"
+    + "7: BALANCE INFO \n"
     + "h: COMMAND help \n"
     + "q: EXIT \n"
     + "===================== \n";
@@ -189,6 +205,10 @@ function initCommand(uniswapV2: UniSwapV2, WETH: Token, LZ: Token) {
         }
     })
 
+    command.putCommand('7', async () => {
+        await balance_info(web3, WETH, LZ);
+    })
+
     command.putCommand('h', () => {
         console.log(command_header);
     })
@@ -210,8 +230,7 @@ async function handleCommand(chunk: string, command: Command) {
     const args = values.slice(1);
     const key = values[0]
     console.log("select", key, ", args", args)
-    if (key && key.length > 0) {
-        await command.execCommand(key, args);
+    if (key && key.length > 0 && await command.execCommand(key, args)) {
         console.log("command end");
     } else {
         console.log('您输入的命令是： ' + chunk);
